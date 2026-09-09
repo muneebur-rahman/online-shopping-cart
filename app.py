@@ -13,11 +13,6 @@ from flask import (
     abort
 )
 
-# ==============================================================================
-# DATABASE CONFIGURATION
-# Update the variables below with your MySQL server credentials.
-# Default root password is often empty '' or '1234' or 'root' depending on your setup.
-# ==============================================================================
 DB_HOST = os.environ.get('DB_HOST', 'localhost')
 DB_USER = os.environ.get('DB_USER', 'root')
 DB_PASSWORD = os.environ.get('DB_PASSWORD', '1234')  # <-- ENTER YOUR MYSQL PASSWORD HERE
@@ -29,10 +24,6 @@ app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'shopping_cart_super_secret_session_key_2026')
 
 
-# ==============================================================================
-# DATABASE CONNECTION HELPER
-# Returns a connection with DictCursor for clean dictionary access (row['col'])
-# ==============================================================================
 def get_db_connection():
     """Establish and return a connection to the MySQL database."""
     return pymysql.connect(
@@ -119,9 +110,6 @@ def inject_cart_info():
     return dict(cart_count=cart_count)
 
 
-# ==============================================================================
-# ROUTES
-# ==============================================================================
 
 # 1. GET / - Home & Product Catalog
 @app.route('/', methods=['GET'])

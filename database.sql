@@ -1,8 +1,4 @@
--- ==========================================================
--- Online Shopping Cart Database Schema
--- Database: online_shopping_cart
--- Compatible with MySQL 5.7+ and MySQL 8.0+
--- ==========================================================
+
 
 -- 1. Create Database if not exists
 CREATE DATABASE IF NOT EXISTS `online_shopping_cart` 
@@ -11,18 +7,11 @@ COLLATE utf8mb4_unicode_ci;
 
 USE `online_shopping_cart`;
 
--- ----------------------------------------------------------
--- 2. Drop existing tables in reverse dependency order
--- ----------------------------------------------------------
 DROP TABLE IF EXISTS `order_items`;
 DROP TABLE IF EXISTS `orders`;
 DROP TABLE IF EXISTS `cart`;
 DROP TABLE IF EXISTS `products`;
 
--- ----------------------------------------------------------
--- 3. Table: products
--- Stores catalog items, pricing, inventory, and category
--- ----------------------------------------------------------
 CREATE TABLE `products` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `name` VARCHAR(255) NOT NULL,
@@ -34,10 +23,6 @@ CREATE TABLE `products` (
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- ----------------------------------------------------------
--- 4. Table: cart
--- Stores shopping cart items per session/user identifier
--- ----------------------------------------------------------
 CREATE TABLE `cart` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `session_id` VARCHAR(100) NOT NULL,
@@ -51,10 +36,8 @@ CREATE TABLE `cart` (
     INDEX `idx_cart_session` (`session_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- ----------------------------------------------------------
--- 5. Table: orders
--- Stores customer checkout info, totals, and order statuses
--- ----------------------------------------------------------
+
+
 CREATE TABLE `orders` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `customer_name` VARCHAR(150) NOT NULL,
@@ -68,10 +51,7 @@ CREATE TABLE `orders` (
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- ----------------------------------------------------------
--- 6. Table: order_items
--- Stores line-item details for each placed order
--- ----------------------------------------------------------
+
 CREATE TABLE `order_items` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `order_id` INT NOT NULL,
@@ -88,9 +68,6 @@ CREATE TABLE `order_items` (
         ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- ----------------------------------------------------------
--- 7. Seed Initial Sample Products (12 Realistic Items)
--- ----------------------------------------------------------
 INSERT INTO `products` (`name`, `description`, `price`, `image`, `stock`, `category`) VALUES
 (
     'Aura Wireless Noise-Canceling Headphones', 
