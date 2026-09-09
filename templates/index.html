@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ShopCart - Everything You Need, In One Cart</title>
+  <meta name="description" content="Discover premium electronics, audio devices, smart wearables and accessories at ShopCart. Quality products delivered fast.">
+  
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛒</text></svg>">
+  
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <header class="navbar">
+    <div class="container nav-wrapper">
+      <a href="{{ url_for('index') }}" class="brand-logo" id="logo-link">
+        <span class="brand-logo-icon"><i class="fa-solid fa-cart-shopping"></i></span>
+        <span>ShopCart</span>
+      </a>
+
+      <button class="mobile-toggle" id="mobileMenuBtn" aria-label="Toggle Navigation">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+
+      <nav>
+        <ul class="nav-menu" id="navMenu">
+          <li><a href="{{ url_for('index') }}" class="nav-link active">Home</a></li>
+          <li><a href="{{ url_for('index') }}#products-section" class="nav-link">Products</a></li>
+          <li><a href="{{ url_for('orders_history') }}" class="nav-link">My Orders</a></li>
+          <li>
+            <a href="{{ url_for('view_cart') }}" class="cart-btn-nav" id="cart-nav-btn">
+              <i class="fa-solid fa-bag-shopping"></i>
+              <span>Cart</span>
+              <span class="cart-badge">{{ cart_count }}</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Flash Notifications -->
+  <div class="container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash-container">
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">
+              <div style="display:flex; align-items:center; gap:0.5rem;">
+                {% if category == 'success' %}<i class="fa-solid fa-circle-check"></i>{% endif %}
+                {% if category == 'error' %}<i class="fa-solid fa-circle-xmark"></i>{% endif %}
+                {% if category == 'warning' %}<i class="fa-solid fa-triangle-exclamation"></i>{% endif %}
+                {% if category == 'info' %}<i class="fa-solid fa-circle-info"></i>{% endif %}
+                <span>{{ message }}</span>
+              </div>
+              <button class="alert-close" onclick="this.parentElement.remove();">&times;</button>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+  </div>
+
+  <main class="main-content container">
+    <!-- Hero Banner -->
+    <section class="hero-banner">
+      <div class="hero-content">
+        <div class="hero-badge">
+          <i class="fa-solid fa-bolt"></i> Premium College E-Commerce Project
+        </div>
+        <h1 class="hero-title">Everything You Need, In One Cart</h1>
+        <p class="hero-subtitle">
+          Explore top-tier audio, smart electronics, designer accessories, and home tech with real-time stock management.
+        </p>
+
+        <!-- Search Form -->
+        <form action="{{ url_for('index') }}" method="GET" class="search-form" id="search-form">
+          <div class="search-input-wrapper">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input 
+              type="text" 
+              name="search" 
+              class="search-input" 
+              placeholder="Search products by title, description..." 
+              value="{{ search_query }}"
+              id="search-input"
+            >
+            {% if active_category %}
+              <input type="hidden" name="category" value="{{ active_category }}">
+            {% endif %}
+          </div>
+          <button type="submit" class="search-btn" id="search-submit-btn">Search</button>
+        </form>
+
+        <!-- Category Filter Chips -->
+        <div class="category-chips">
+          <a 
+            href="{{ url_for('index', search=search_query) }}" 
+            class="category-chip {% if not active_category %}active{% endif %}"
+          >
+            All Products
+          </a>
+          {% for cat in categories %}
+            <a 
+              href="{{ url_for('index', category=cat, search=search_query) }}" 
+              class="category-chip {% if active_category == cat %}active{% endif %}"
+            >
+              {{ cat }}
+            </a>
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+
+    <!-- Products Catalog Section -->
+    <section id="products-section">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">
+            {% if active_category %}
+              {{ active_category }} Catalog
+            {% elif search_query %}
+              Search Results for "{{ search_query }}"
+            {% else %}
+              Featured Products
+            {% endif %}
+          </h2>
+          <p style="color: var(--color-text-muted); font-size: 0.95rem;">
+            Showing {{ products|length }} available items
+          </p>
+        </div>
+
+        {% if active_category or search_query %}
+          <div class="filter-badge-row">
+            {% if active_category %}
+              <span class="filter-active-tag">
+                Category: {{ active_category }}
+                <a href="{{ url_for('index', search=search_query) }}" style="color:inherit; margin-left:4px;">
+                  <i class="fa-solid fa-xmark"></i>
+                </a>
+              </span>
+            {% endif %}
+            {% if search_query %}
+              <span class="filter-active-tag">
+                Search: "{{ search_query }}"
+                <a href="{{ url_for('index', category=active_category) }}" style="color:inherit; margin-left:4px;">
+                  <i class="fa-solid fa-xmark"></i>
+                </a>
+              </span>
+            {% endif %}
+            <a href="{{ url_for('index') }}" class="btn btn-outline" style="padding: 0.35rem 0.75rem; font-size: 0.85rem;">
+              Reset Filters
+            </a>
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Products Grid -->
+      {% if products %}
+        <div class="product-grid">
+          {% for p in products %}
+            <div class="product-card" id="product-card-{{ p.id }}">
+              <div class="product-image-wrapper">
+                <img 
+                  src="{{ p.image }}" 
+                  alt="{{ p.name }}" 
+                  class="product-image" 
+                  loading="lazy"
+                  onerror="this.src='https://placehold.co/600x450/e2e8f0/475569?text=Product+Image'"
+                >
+                <span class="product-category-tag">{{ p.category }}</span>
+
+                <!-- Stock status pill -->
+                {% if p.stock > 10 %}
+                  <span class="stock-tag in-stock"><i class="fa-solid fa-check"></i> In Stock ({{ p.stock }})</span>
+                {% elif p.stock > 0 %}
+                  <span class="stock-tag low-stock"><i class="fa-solid fa-triangle-exclamation"></i> Low Stock ({{ p.stock }})</span>
+                {% else %}
+                  <span class="stock-tag out-of-stock"><i class="fa-solid fa-ban"></i> Out of Stock</span>
+                {% endif %}
+              </div>
+
+              <div class="product-body">
+                <h3 class="product-title" title="{{ p.name }}">{{ p.name }}</h3>
+                <p class="product-desc">{{ p.description }}</p>
+
+                <div class="product-footer">
+                  <span class="product-price">${{ "%.2f"|format(p.price) }}</span>
+
+                  <form action="{{ url_for('add_to_cart', product_id=p.id) }}" method="POST">
+                    <button 
+                      type="submit" 
+                      class="btn-add-cart" 
+                      id="add-cart-btn-{{ p.id }}"
+                      {% if p.stock <= 0 %}disabled{% endif %}
+                    >
+                      <i class="fa-solid fa-cart-plus"></i>
+                      <span>{% if p.stock > 0 %}Add to Cart{% else %}Sold Out{% endif %}</span>
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state">
+          <div class="empty-icon"><i class="fa-solid fa-box-open"></i></div>
+          <h3 class="empty-title">No Products Found</h3>
+          <p class="empty-desc">We couldn't find any items matching your filters. Try clearing your search or browsing all categories.</p>
+          <a href="{{ url_for('index') }}" class="btn btn-primary">Browse All Products</a>
+        </div>
+      {% endif %}
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <div class="footer-brand-title">ShopCart</div>
+          <p style="font-size: 0.9rem; max-width: 380px;">
+            A full-stack College DBMS Project built with Python Flask, MySQL, and modern responsive web technologies.
+          </p>
+        </div>
+        <div>
+          <div class="footer-links-title">Quick Links</div>
+          <ul class="footer-links">
+            <li><a href="{{ url_for('index') }}">Home Catalog</a></li>
+            <li><a href="{{ url_for('view_cart') }}">Shopping Cart</a></li>
+            <li><a href="{{ url_for('orders_history') }}">My Orders</a></li>
+          </ul>
+        </div>
+        <div>
+          <div class="footer-links-title">Project Stack</div>
+          <ul class="footer-links">
+            <li><span>Python 3.x / Flask</span></li>
+            <li><span>MySQL 8.0 / PyMySQL</span></li>
+            <li><span>Jinja2 Templates</span></li>
+            <li><span>HTML5 &amp; CSS3</span></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        &copy; 2026 ShopCart Online Shopping Project. Designed for College Project Demonstration.
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Responsive Navbar Toggle
+    const mobileBtn = document.getElementById('mobileMenuBtn');
+    const navMenu = document.getElementById('navMenu');
+    if (mobileBtn && navMenu) {
+      mobileBtn.addEventListener('click', () => {
+        navMenu.classList.toggle('show');
+      });
+    }
+  </script>
+</body>
+</html>

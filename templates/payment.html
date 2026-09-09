@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Demo Payment Gateway - ShopCart</title>
+  <meta name="description" content="Simulate a demo payment transaction for your college shopping cart project.">
+  
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛒</text></svg>">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <header class="navbar">
+    <div class="container nav-wrapper">
+      <a href="{{ url_for('index') }}" class="brand-logo" id="logo-link">
+        <span class="brand-logo-icon"><i class="fa-solid fa-cart-shopping"></i></span>
+        <span>ShopCart</span>
+      </a>
+
+      <button class="mobile-toggle" id="mobileMenuBtn" aria-label="Toggle Navigation">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+
+      <nav>
+        <ul class="nav-menu" id="navMenu">
+          <li><a href="{{ url_for('index') }}" class="nav-link">Home</a></li>
+          <li><a href="{{ url_for('index') }}#products-section" class="nav-link">Products</a></li>
+          <li><a href="{{ url_for('orders_history') }}" class="nav-link">My Orders</a></li>
+          <li>
+            <a href="{{ url_for('view_cart') }}" class="cart-btn-nav" id="cart-nav-btn">
+              <i class="fa-solid fa-bag-shopping"></i>
+              <span>Cart</span>
+              <span class="cart-badge">{{ cart_count }}</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Flash Notifications -->
+  <div class="container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash-container">
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">
+              <div style="display:flex; align-items:center; gap:0.5rem;">
+                {% if category == 'success' %}<i class="fa-solid fa-circle-check"></i>{% endif %}
+                {% if category == 'error' %}<i class="fa-solid fa-circle-xmark"></i>{% endif %}
+                {% if category == 'warning' %}<i class="fa-solid fa-triangle-exclamation"></i>{% endif %}
+                {% if category == 'info' %}<i class="fa-solid fa-circle-info"></i>{% endif %}
+                <span>{{ message }}</span>
+              </div>
+              <button class="alert-close" onclick="this.parentElement.remove();">&times;</button>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+  </div>
+
+  <main class="main-content container">
+    <!-- Demo Project Notice Banner -->
+    <div class="demo-banner">
+      <div class="demo-banner-icon"><i class="fa-solid fa-flask-vial"></i></div>
+      <div>
+        <strong>College Demonstration Mode:</strong>
+        This is a simulated payment gateway. No real financial credentials or charges are processed. Select any payment method below and click "Pay Now" to create your verified order.
+      </div>
+    </div>
+
+    <div class="checkout-grid">
+      <!-- Payment Options Column -->
+      <div class="form-card">
+        <h1 class="form-card-title">
+          <i class="fa-solid fa-credit-card" style="color: var(--color-primary);"></i>
+          <span>Choose Payment Method</span>
+        </h1>
+
+        <form action="{{ url_for('payment') }}" method="POST" id="payment-form">
+          <!-- Method Selection Cards -->
+          <div class="payment-methods-grid">
+            <!-- Cash on Delivery -->
+            <label class="payment-method-card selected" id="label-cod">
+              <input type="radio" name="payment_method" value="COD" checked onclick="selectMethod('cod')">
+              <div class="pm-icon"><i class="fa-solid fa-truck-ramp-box"></i></div>
+              <div class="pm-name">Cash on Delivery</div>
+              <div class="pm-desc">Pay upon delivery</div>
+            </label>
+
+            <!-- UPI -->
+            <label class="payment-method-card" id="label-upi">
+              <input type="radio" name="payment_method" value="UPI" onclick="selectMethod('upi')">
+              <div class="pm-icon"><i class="fa-solid fa-qrcode"></i></div>
+              <div class="pm-name">UPI / QR</div>
+              <div class="pm-desc">Google Pay, PhonePe, Paytm</div>
+            </label>
+
+            <!-- Credit/Debit Card -->
+            <label class="payment-method-card" id="label-card">
+              <input type="radio" name="payment_method" value="Card" onclick="selectMethod('card')">
+              <div class="pm-icon"><i class="fa-solid fa-credit-card"></i></div>
+              <div class="pm-name">Card Demo</div>
+              <div class="pm-desc">Visa / MasterCard / RuPay</div>
+            </label>
+          </div>
+
+          <!-- Panel: COD Details -->
+          <div class="payment-detail-panel active" id="panel-cod">
+            <h3 style="font-size: 1.05rem; margin-bottom: 0.5rem; color: var(--color-text-primary);">
+              <i class="fa-solid fa-handshake" style="color: var(--color-success);"></i> Pay with Cash on Delivery
+            </h3>
+            <p style="font-size: 0.9rem; color: var(--color-text-secondary); margin-bottom: 0.75rem;">
+              You can pay via cash or mobile scan when the delivery agent arrives at your address.
+            </p>
+            <div style="background:#fff; border:1px dashed #cbd5e1; border-radius:var(--radius-sm); padding:0.75rem; font-size:0.85rem;">
+              <strong>Delivery Recipient:</strong> {{ checkout_info.customer_name }}<br>
+              <strong>Delivery Location:</strong> {{ checkout_info.address }}
+            </div>
+          </div>
+
+          <!-- Panel: UPI Details -->
+          <div class="payment-detail-panel" id="panel-upi">
+            <div class="upi-qr-box">
+              <h3 style="font-size: 1.05rem; margin-bottom: 0.5rem;">Scan Demo QR or Enter UPI ID</h3>
+              <div class="upi-qr-placeholder">
+                <i class="fa-solid fa-qrcode" style="font-size: 4.5rem; color: var(--color-primary);"></i>
+                <span style="font-size: 0.75rem; font-weight: 600;">DEMO SCAN ONLY</span>
+              </div>
+              <div class="form-group" style="max-width: 320px; margin: 0 auto; text-align: left;">
+                <label class="form-label">Dummy UPI ID</label>
+                <input type="text" class="form-control" placeholder="user@okhdfcbank" value="demo-student@upi">
+              </div>
+            </div>
+          </div>
+
+          <!-- Panel: Card Details -->
+          <div class="payment-detail-panel" id="panel-card">
+            <!-- Sleek Card Mockup -->
+            <div class="demo-card-box">
+              <div class="demo-card-chip"></div>
+              <div class="demo-card-number">•••• •••• •••• 4242</div>
+              <div class="demo-card-info">
+                <div>
+                  <div>Card Holder</div>
+                  <div style="font-weight: 700; color: #fff;">{{ checkout_info.customer_name|upper }}</div>
+                </div>
+                <div>
+                  <div>Expires</div>
+                  <div style="font-weight: 700; color: #fff;">12/28</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Dummy Card Inputs -->
+            <div class="form-group">
+              <label class="form-label">Card Number (Demo)</label>
+              <input type="text" class="form-control" placeholder="4242 •••• •••• 4242" value="4242 4242 4242 4242" maxlength="19">
+            </div>
+
+            <div class="form-row-2">
+              <div class="form-group">
+                <label class="form-label">Expiry MM/YY</label>
+                <input type="text" class="form-control" placeholder="MM/YY" value="12/28" maxlength="5">
+              </div>
+              <div class="form-group">
+                <label class="form-label">CVV</label>
+                <input type="password" class="form-control" placeholder="CVV" value="888" maxlength="4">
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-block btn-lg" id="pay-now-btn" style="margin-top: 1.5rem;">
+            <i class="fa-solid fa-lock"></i>
+            <span>Complete Demo Payment (${{ "%.2f"|format(total_amount) }})</span>
+          </button>
+        </form>
+      </div>
+
+      <!-- Checkout Information Sidebar -->
+      <div class="summary-card">
+        <h2 class="summary-title">Order Total</h2>
+
+        <div class="summary-row">
+          <span>Items in Order</span>
+          <span>{{ cart_items|sum(attribute='quantity') }} items</span>
+        </div>
+
+        <div class="summary-row">
+          <span>Shipping &amp; Handling</span>
+          <span style="color: var(--color-success); font-weight: 600;">FREE</span>
+        </div>
+
+        <div class="summary-row total">
+          <span>Total to Pay</span>
+          <span>${{ "%.2f"|format(total_amount) }}</span>
+        </div>
+
+        <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--color-border); font-size: 0.85rem;">
+          <div style="font-weight: 700; color: var(--color-text-primary); margin-bottom: 0.35rem;">
+            <i class="fa-solid fa-user-check"></i> Customer Details
+          </div>
+          <div><strong>Name:</strong> {{ checkout_info.customer_name }}</div>
+          <div><strong>Email:</strong> {{ checkout_info.email }}</div>
+          <div><strong>Phone:</strong> {{ checkout_info.phone }}</div>
+          <div style="margin-top: 0.35rem;"><strong>Address:</strong><br>{{ checkout_info.address }}</div>
+        </div>
+
+        <div style="margin-top: 1rem;">
+          <a href="{{ url_for('checkout') }}" class="btn btn-outline btn-block" style="font-size: 0.85rem; padding: 0.45rem;">
+            Edit Details
+          </a>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-bottom">
+        &copy; 2026 ShopCart Online Shopping Project. Designed for College Project Demonstration.
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Tabbed Payment Method Switcher
+    function selectMethod(method) {
+      // Update selected card styling
+      document.querySelectorAll('.payment-method-card').forEach(el => el.classList.remove('selected'));
+      const activeLabel = document.getElementById('label-' + method);
+      if (activeLabel) activeLabel.classList.add('selected');
+
+      // Toggle Panels
+      document.querySelectorAll('.payment-detail-panel').forEach(el => el.classList.remove('active'));
+      const activePanel = document.getElementById('panel-' + method);
+      if (activePanel) activePanel.classList.add('active');
+    }
+
+    const mobileBtn = document.getElementById('mobileMenuBtn');
+    const navMenu = document.getElementById('navMenu');
+    if (mobileBtn && navMenu) {
+      mobileBtn.addEventListener('click', () => {
+        navMenu.classList.toggle('show');
+      });
+    }
+  </script>
+</body>
+</html>

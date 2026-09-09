@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order Confirmation #{{ order.id }} - ShopCart</title>
+  <meta name="description" content="Thank you for your order! View your order receipt and transaction details.">
+  
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛒</text></svg>">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <header class="navbar">
+    <div class="container nav-wrapper">
+      <a href="{{ url_for('index') }}" class="brand-logo" id="logo-link">
+        <span class="brand-logo-icon"><i class="fa-solid fa-cart-shopping"></i></span>
+        <span>ShopCart</span>
+      </a>
+
+      <button class="mobile-toggle" id="mobileMenuBtn" aria-label="Toggle Navigation">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+
+      <nav>
+        <ul class="nav-menu" id="navMenu">
+          <li><a href="{{ url_for('index') }}" class="nav-link">Home</a></li>
+          <li><a href="{{ url_for('index') }}#products-section" class="nav-link">Products</a></li>
+          <li><a href="{{ url_for('orders_history') }}" class="nav-link">My Orders</a></li>
+          <li>
+            <a href="{{ url_for('view_cart') }}" class="cart-btn-nav" id="cart-nav-btn">
+              <i class="fa-solid fa-bag-shopping"></i>
+              <span>Cart</span>
+              <span class="cart-badge">{{ cart_count }}</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Flash Notifications -->
+  <div class="container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash-container">
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">
+              <div style="display:flex; align-items:center; gap:0.5rem;">
+                {% if category == 'success' %}<i class="fa-solid fa-circle-check"></i>{% endif %}
+                {% if category == 'error' %}<i class="fa-solid fa-circle-xmark"></i>{% endif %}
+                {% if category == 'warning' %}<i class="fa-solid fa-triangle-exclamation"></i>{% endif %}
+                {% if category == 'info' %}<i class="fa-solid fa-circle-info"></i>{% endif %}
+                <span>{{ message }}</span>
+              </div>
+              <button class="alert-close" onclick="this.parentElement.remove();">&times;</button>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+  </div>
+
+  <main class="main-content container">
+    <div class="success-card">
+      <div class="success-icon-badge">
+        <i class="fa-solid fa-check"></i>
+      </div>
+      <h1 class="success-title">Order Placed Successfully!</h1>
+      <p class="success-subtitle">
+        Thank you, <strong>{{ order.customer_name }}</strong>. Your demo purchase has been confirmed and logged in the database.
+      </p>
+
+      <!-- Digital Receipt Card -->
+      <div class="order-receipt-box">
+        <div class="receipt-header">
+          <div>
+            <div class="receipt-label">Order Number</div>
+            <div class="receipt-order-id">#ORD-{{ "%04d"|format(order.id) }}</div>
+          </div>
+          <div style="text-align: right;">
+            <div class="receipt-label">Status</div>
+            <span class="status-badge status-confirmed">
+              <i class="fa-solid fa-circle-check"></i> {{ order.order_status }}
+            </span>
+          </div>
+        </div>
+
+        <div class="receipt-grid">
+          <div>
+            <div class="receipt-label">Customer Name</div>
+            <div class="receipt-val">{{ order.customer_name }}</div>
+          </div>
+          <div>
+            <div class="receipt-label">Date &amp; Time</div>
+            <div class="receipt-val">{{ order.created_at.strftime('%b %d, %Y - %I:%M %p') if order.created_at else 'Just now' }}</div>
+          </div>
+          <div>
+            <div class="receipt-label">Email Address</div>
+            <div class="receipt-val">{{ order.email }}</div>
+          </div>
+          <div>
+            <div class="receipt-label">Contact Phone</div>
+            <div class="receipt-val">{{ order.phone }}</div>
+          </div>
+          <div>
+            <div class="receipt-label">Payment Method</div>
+            <div class="receipt-val">{{ order.payment_method }}</div>
+          </div>
+          <div>
+            <div class="receipt-label">Payment Status</div>
+            <div class="receipt-val">
+              <span class="status-badge {% if 'Pending' in order.payment_status %}status-pending{% else %}status-paid{% endif %}">
+                {{ order.payment_status }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-bottom: 1rem;">
+          <div class="receipt-label">Delivery Address</div>
+          <div class="receipt-val" style="font-weight: normal; color: var(--color-text-secondary);">
+            {{ order.address }}
+          </div>
+        </div>
+
+        <!-- Purchased Line Items -->
+        <div style="border-top: 1px solid var(--color-border); padding-top: 1rem;">
+          <div class="receipt-label" style="margin-bottom: 0.5rem;">Items Ordered</div>
+          <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+            {% for item in order_items %}
+              <tr>
+                <td style="padding: 0.4rem 0;">
+                  <strong>{{ item.name }}</strong> &times; {{ item.quantity }}
+                </td>
+                <td style="text-align: right; font-weight: 600;">
+                  ${{ "%.2f"|format(item.subtotal) }}
+                </td>
+              </tr>
+            {% endfor %}
+            <tr style="border-top: 2px dashed var(--color-border);">
+              <td style="padding-top: 0.75rem; font-size: 1.1rem; font-weight: 700;">
+                Total Amount Paid
+              </td>
+              <td style="padding-top: 0.75rem; font-size: 1.25rem; font-weight: 800; text-align: right; color: var(--color-primary);">
+                ${{ "%.2f"|format(order.total_amount) }}
+              </td>
+            </tr>
+          </table>
+        </div>
+      </div>
+
+      <!-- Call to Action Buttons -->
+      <div class="success-actions">
+        <a href="{{ url_for('index') }}" class="btn btn-primary btn-lg" id="continue-shopping-btn">
+          <i class="fa-solid fa-cart-plus"></i> Continue Shopping
+        </a>
+        <a href="{{ url_for('orders_history') }}" class="btn btn-outline btn-lg" id="view-orders-btn">
+          <i class="fa-solid fa-clock-rotate-left"></i> View All Orders
+        </a>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-bottom">
+        &copy; 2026 ShopCart Online Shopping Project. Designed for College Project Demonstration.
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    const mobileBtn = document.getElementById('mobileMenuBtn');
+    const navMenu = document.getElementById('navMenu');
+    if (mobileBtn && navMenu) {
+      mobileBtn.addEventListener('click', () => {
+        navMenu.classList.toggle('show');
+      });
+    }
+  </script>
+</body>
+</html>
